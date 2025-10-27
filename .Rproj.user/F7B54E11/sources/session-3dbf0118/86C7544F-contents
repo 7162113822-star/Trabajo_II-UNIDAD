@@ -1,0 +1,53 @@
+---
+title: "ANÁLISIS DE DATOS"
+author: "Santillan et al., 2025"
+format: html
+---
+
+# PASOS PARA ANALIZAR DATOS
+
+1.  Crear mi diseño experimental =\> modelo estadístico
+2.  Colectar los datos
+3.  Importar y verificar los factores.
+4.  Análisis de Variancia (aov() o lm())
+5.  Comparación de medias
+6.  Gráfico
+
+# librerias
+
+```{r}
+library(tidyverse)
+library(googlesheets4)
+library(Matrix)
+library(lme4)
+library(dplyr)
+library(purrr)
+```
+
+# cargar base de datos
+
+```{r}
+library(readr)
+fb <- read_csv("C:/Users/hp/Downloads/NIVELES DE NITRÓGENO Y MOMENTOS DE RIEGO EN EL RENDIMIENTO DE MAÍZ AMARILLO DURO (Zea mays L.) HÍBRIDO PM- 213, BAJO GOTEO.csv")
+View(fb)
+
+# Convertir variables a factor (por ejemplo, desde la primera hasta 'bloque')
+fb <- fb %>%
+  mutate(across(1:bloque, as.factor))
+str(fb)
+
+```
+
+# modelo
+
+$$ Number {Mazorca} = \mu + bloque + riego + dosis + riego*dosis + e$$ \# Análisis de varianza
+
+```{r}
+md <- lmer(formula = n_mazorcas ~ 0 + (1 | bloque) + riego * dosis, data = fb)
+
+anova(md)
+
+library(car)
+
+Anova(md)
+```

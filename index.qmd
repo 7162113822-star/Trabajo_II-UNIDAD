@@ -1,6 +1,6 @@
 ---
 title: "ANÁLISIS DE DATOS"
-author: "Santillan et al., 2025"
+authores: "Santillan et al., 2025"
 format: html
 ---
 
@@ -21,7 +21,12 @@ library(googlesheets4)
 library(Matrix)
 library(lme4)
 library(dplyr)
+library(emmeans)
+library(multcompView)
+library(multcomp)
 library(purrr)
+library(ggplot2)
+
 ```
 
 # cargar base de datos
@@ -38,16 +43,267 @@ str(fb)
 
 ```
 
-# modelo
+# Modelo
 
-$$ Number {Mazorca} = \mu + bloque + riego + dosis + riego*dosis + e$$ \# Análisis de varianza
+$$ Number {Mazorca} = \mu + bloque + riego + dosis + riego*dosis + e$$
+
+# Análisis de varianza
 
 ```{r}
-md <- lmer(formula = n_mazorcas ~ 0 + (1 | bloque) + riego * dosis, data = fb)
+md <- lmer(n_mazorcas ~ riego * dosis + (1 | bloque), data = fb)
 
 anova(md)
 
 library(car)
 
 Anova(md)
+```
+
+# Comparación de medias para riego
+
+# Para riego
+
+```{r}
+library(emmeans)
+
+# Comparación de medias solo para riego
+emm_riego1 <- emmeans(md, ~ riego)
+cld(emm_riego1, adjust = "tukey")
+
+```
+
+```{r}
+# 2️⃣ Obtener las medias ajustadas (emmeans) para el factor riego
+emm_riego <- emmeans(md, ~ riego)
+
+# 3️⃣ Obtener grupos de letras (comparación múltiple con ajuste Tukey o Sidak)
+letras <- cld(emm_riego, adjust = "tukey", Letters = letters)
+
+# 4️⃣ Mostrar resultados ordenados
+letras <- letras[order(letras$emmean), ]  # opcional: ordenar por la media
+print(letras)
+```
+
+```{r}
+# Convertir el resultado a data.frame
+df_letras <- as.data.frame(letras)
+
+# 5️⃣ Gráfico de barras con letras
+ggplot(df_letras, aes(x = riego, y = emmean)) +
+  geom_col(fill = "skyblue", color = "black") +
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
+  geom_text(aes(label = .group, y = emmean + 0.05), size = 5, fontface = "bold") +
+  labs(
+    x = "Tratamientos de Riego",
+    y = "Número medio de mazorcas (ajustado)",
+    title = "Comparación de medias para el factor Riego"
+  ) +
+  theme_minimal()
+
+```
+
+# Para dosis
+
+```{r}
+library(emmeans)
+
+# Comparación de medias solo para dosis
+emm_dosis1 <- emmeans(md, ~ dosis)
+cld(emm_dosis1, adjust = "tukey")
+# 2️⃣ Obtener las medias ajustadas (emmeans) para el factor riego
+emm_dosis1 <- emmeans(md, ~ dosis)
+
+# 3️⃣ Obtener grupos de letras (comparación múltiple con ajuste Tukey o Sidak)
+letras <- cld(emm_dosis1, adjust = "tukey", Letters = letters)
+
+# 4️⃣ Mostrar resultados ordenados
+letras <- letras[order(letras$emmean), ]  # opcional: ordenar por la media
+print(letras)
+# Convertir el resultado a data.frame
+df_letras <- as.data.frame(letras)
+
+# 5️⃣ Gráfico de barras con letras
+ggplot(df_letras, aes(x = dosis, y = emmean)) +
+  geom_col(fill = "skyblue", color = "black") +
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
+  geom_text(aes(label = .group, y = emmean + 0.05), size = 5, fontface = "bold") +
+  labs(
+    x = "Tratamientos de dosis",
+    y = "Número medio de mazorcas (ajustado)",
+    title = "Comparación de medias para el factor dosis"
+  ) +
+  theme_minimal()
+
+```
+
+# Modelo
+
+$$ Rendimiento = \mu + bloque + riego + dosis + riego*dosis + e$$
+
+# Análisis de varianza
+
+```{r}
+md2 <- lmer(r_total ~ riego * dosis + (1 | bloque), data = fb)
+
+anova(md2)
+
+library(car)
+
+Anova(md2)
+```
+
+# Comparación de medias para riego
+
+# Para riego
+
+```{r}
+library(emmeans)
+
+# Comparación de medias solo para riego
+emm_riego2 <- emmeans(md2, ~ riego)
+cld(emm_riego2, adjust = "tukey")
+# 2️⃣ Obtener las medias ajustadas (emmeans) para el factor riego
+emm_riego2 <- emmeans(md2, ~ riego)
+
+# 3️⃣ Obtener grupos de letras (comparación múltiple con ajuste Tukey o Sidak)
+letras <- cld(emm_riego2, adjust = "tukey", Letters = letters)
+
+# 4️⃣ Mostrar resultados ordenados
+letras <- letras[order(letras$emmean), ]  # opcional: ordenar por la media
+print(letras)
+
+# Convertir el resultado a data.frame
+df_letras <- as.data.frame(letras)
+
+# 5️⃣ Gráfico de barras con letras
+ggplot(df_letras, aes(x = riego, y = emmean)) +
+  geom_col(fill = "skyblue", color = "black") +
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
+  geom_text(aes(label = .group, y = emmean + 0.05), size = 5, fontface = "bold") +
+  labs(
+    x = "Tratamientos de Riego",
+    y = "Rendimiento total",
+    title = "Comparación de medias para el factor Riego"
+  ) +
+  theme_minimal()
+
+```
+
+# Para dosis
+
+```{r}
+library(emmeans)
+
+# Comparación de medias solo para dosis
+emm_dosis2 <- emmeans(md2, ~ dosis)
+cld(emm_dosis2, adjust = "tukey")
+# 2️⃣ Obtener las medias ajustadas (emmeans) para el factor riego
+emm_dosis2 <- emmeans(md2, ~ dosis)
+
+# 3️⃣ Obtener grupos de letras (comparación múltiple con ajuste Tukey o Sidak)
+letras <- cld(emm_dosis2, adjust = "tukey", Letters = letters)
+
+# 4️⃣ Mostrar resultados ordenados
+letras <- letras[order(letras$emmean), ]  # opcional: ordenar por la media
+print(letras)
+# Convertir el resultado a data.frame
+df_letras <- as.data.frame(letras)
+
+# 5️⃣ Gráfico de barras con letras
+ggplot(df_letras, aes(x = dosis, y = emmean)) +
+  geom_col(fill = "skyblue", color = "black") +
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
+  geom_text(aes(label = .group, y = emmean + 0.05), size = 5, fontface = "bold") +
+  labs(
+    x = "Tratamientos de dosis",
+    y = "Rendimiento total (ajustado)",
+    title = "Comparación de medias para el factor dosis"
+  ) +
+  theme_minimal()
+```
+
+# Modelo
+
+$$ Eficiencia = \mu + bloque + riego + dosis + riego*dosis + e$$
+
+# Análisis de varianza
+
+```{r}
+md3 <- lmer(e_agua ~ riego * dosis + (1 | bloque), data = fb)
+
+anova(md3)
+
+library(car)
+
+Anova(md3)
+```
+
+# Comparación de medias para riego
+
+# Para riego
+
+```{r}
+library(emmeans)
+
+# Comparación de medias solo para riego
+emm_riego3 <- emmeans(md3, ~ riego)
+cld(emm_riego3, adjust = "tukey")
+# 2️⃣ Obtener las medias ajustadas (emmeans) para el factor riego
+emm_riego3 <- emmeans(md3, ~ riego)
+
+# 3️⃣ Obtener grupos de letras (comparación múltiple con ajuste Tukey o Sidak)
+letras <- cld(emm_riego3, adjust = "tukey", Letters = letters)
+
+# 4️⃣ Mostrar resultados ordenados
+letras <- letras[order(letras$emmean), ]  # opcional: ordenar por la media
+print(letras)
+
+# Convertir el resultado a data.frame
+df_letras <- as.data.frame(letras)
+
+# 5️⃣ Gráfico de barras con letras
+ggplot(df_letras, aes(x = riego, y = emmean)) +
+  geom_col(fill = "skyblue", color = "black") +
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
+  geom_text(aes(label = .group, y = emmean + 0.05), size = 5, fontface = "bold") +
+  labs(
+    x = "Tratamientos de Riego",
+    y = "Eficiencia de agua",
+    title = "Comparación de medias para el factor Riego"
+  ) +
+  theme_minimal()
+
+```
+
+# Para dosis
+
+```{r}
+library(emmeans)
+
+# Comparación de medias solo para dosis
+emm_dosis3 <- emmeans(md3, ~ dosis)
+cld(emm_dosis3, adjust = "tukey")
+# 2️⃣ Obtener las medias ajustadas (emmeans) para el factor riego
+emm_dosis3 <- emmeans(md3, ~ dosis)
+
+# 3️⃣ Obtener grupos de letras (comparación múltiple con ajuste Tukey o Sidak)
+letras <- cld(emm_dosis3, adjust = "tukey", Letters = letters)
+
+# 4️⃣ Mostrar resultados ordenados
+letras <- letras[order(letras$emmean), ]  # opcional: ordenar por la media
+print(letras)
+# Convertir el resultado a data.frame
+df_letras <- as.data.frame(letras)
+
+# 5️⃣ Gráfico de barras con letras
+ggplot(df_letras, aes(x = dosis, y = emmean)) +
+  geom_col(fill = "skyblue", color = "black") +
+  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
+  geom_text(aes(label = .group, y = emmean + 0.05), size = 5, fontface = "bold") +
+  labs(
+    x = "Tratamientos de dosis",
+    y = "Eficiencia de agua",
+    title = "Comparación de medias para el factor dosis"
+  ) +
+  theme_minimal()
 ```
